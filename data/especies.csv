@@ -1,0 +1,75 @@
+clave,nombre_comun,nombre_cientifico,familia
+cupressus,Ciprés,Cupressus sp.,Cupressaceae
+cupressus lusitanica,Ciprés,Cupressus lusitanica,Cupressaceae
+cipres,Ciprés,Cupressus sp.,Cupressaceae
+pinus patula,Pino pátula,Pinus patula,Pinaceae
+pinus radiata,Pino radiata,Pinus radiata,Pinaceae
+pinus,Pino,Pinus sp.,Pinaceae
+pino,Pino,Pinus sp.,Pinaceae
+eucalyptus globulus,Eucalipto,Eucalyptus globulus,Myrtaceae
+eucalyptus camaldulensis,Eucalipto rojo,Eucalyptus camaldulensis,Myrtaceae
+eucalyptus,Eucalipto,Eucalyptus sp.,Myrtaceae
+eucalipto,Eucalipto,Eucalyptus sp.,Myrtaceae
+acacia melanoxylon,Acacia negra,Acacia melanoxylon,Fabaceae
+acacia decurrens,Acacia decurrens,Acacia decurrens,Fabaceae
+acacia mangium,Acacia mangium,Acacia mangium,Fabaceae
+laurel de cera,Laurel de cera,Morella pubescens,Myricaceae
+morella pubescens,Laurel de cera,Morella pubescens,Myricaceae
+morella parvifolia,Laurel de cera,Morella parvifolia,Myricaceae
+alnus acuminata,Aliso,Alnus acuminata,Betulaceae
+aliso,Aliso,Alnus acuminata,Betulaceae
+fraxinus uhdei,Urapán,Fraxinus uhdei,Oleaceae
+urapan,Urapán,Fraxinus uhdei,Oleaceae
+sambucus nigra,Sauco,Sambucus nigra,Adoxaceae
+sauco,Sauco,Sambucus nigra,Adoxaceae
+salix humboldtiana,Sauce,Salix humboldtiana,Salicaceae
+sauce,Sauce,Salix humboldtiana,Salicaceae
+tecoma stans,Chirlobirlo,Tecoma stans,Bignoniaceae
+croton magdalenensis,Drago,Croton magdalenensis,Euphorbiaceae
+abatia parviflora,Duraznillo,Abatia parviflora,Salicaceae
+baccharis latifolia,Chilco,Baccharis latifolia,Asteraceae
+dodonaea viscosa,Hayuelo,Dodonaea viscosa,Sapindaceae
+gliricidia sepium,Matarratón,Gliricidia sepium,Fabaceae
+matarraton,Matarratón,Gliricidia sepium,Fabaceae
+guazuma ulmifolia,Guácimo,Guazuma ulmifolia,Malvaceae
+guacimo,Guácimo,Guazuma ulmifolia,Malvaceae
+samanea saman,Samán,Samanea saman,Fabaceae
+saman,Samán,Samanea saman,Fabaceae
+tabebuia rosea,Roble,Tabebuia rosea,Bignoniaceae
+cordia alliodora,Nogal cafetero,Cordia alliodora,Boraginaceae
+erythrina poeppigiana,Cámbulo,Erythrina poeppigiana,Fabaceae
+erythrina fusca,Cachimbo,Erythrina fusca,Fabaceae
+leucaena leucocephala,Leucaena,Leucaena leucocephala,Fabaceae
+bursera simaruba,Indio desnudo,Bursera simaruba,Burseraceae
+spondias mombin,Hobo,Spondias mombin,Anacardiaceae
+mangifera indica,Mango,Mangifera indica,Anacardiaceae
+mango,Mango,Mangifera indica,Anacardiaceae
+azadirachta indica,Neem,Azadirachta indica,Meliaceae
+neem,Neem,Azadirachta indica,Meliaceae
+cassia grandis,Cañafístula,Cassia grandis,Fabaceae
+crescentia cujete,Totumo,Crescentia cujete,Bignoniaceae
+totumo,Totumo,Crescentia cujete,Bignoniaceae
+pithecellobium dulce,Payandé,Pithecellobium dulce,Fabaceae
+prosopis juliflora,Trupillo,Prosopis juliflora,Fabaceae
+trupillo,Trupillo,Prosopis juliflora,Fabaceae
+ceiba pentandra,Ceiba,Ceiba pentandra,Malvaceae
+enterolobium cyclocarpum,Orejero,Enterolobium cyclocarpum,Fabaceae
+hura crepitans,Ceiba de leche,Hura crepitans,Euphorbiaceae
+anacardium excelsum,Caracolí,Anacardium excelsum,Anacardiaceae
+cecropia peltata,Yarumo,Cecropia peltata,Urticaceae
+psidium guajava,Guayabo,Psidium guajava,Myrtaceae
+guayabo,Guayabo,Psidium guajava,Myrtaceae
+persea americana,Aguacate,Persea americana,Lauraceae
+aguacate,Aguacate,Persea americana,Lauraceae
+citrus,Cítrico,Citrus sp.,Rutaceae
+ficus,Higuerón,Ficus sp.,Moraceae
+handroanthus chrysanthus,Guayacán amarillo,Handroanthus chrysanthus,Bignoniaceae
+cedrela odorata,Cedro,Cedrela odorata,Meliaceae
+swietenia macrophylla,Caoba,Swietenia macrophylla,Meliaceae
+tectona grandis,Teca,Tectona grandis,Lamiaceae
+teca,Teca,Tectona grandis,Lamiaceae
+gmelina arborea,Melina,Gmelina arborea,Lamiaceae
+melina,Melina,Gmelina arborea,Lamiaceae
+pachira quinata,Ceiba tolúa,Pachira quinata,Malvaceae
+bambusa vulgaris,Bambú,Bambusa vulgaris,Poaceae
+guadua angustifolia,Guadua,Guadua angustifolia,Poaceae
