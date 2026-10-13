@@ -149,6 +149,11 @@ def _llenar(tbl, f: dict, parent, foto_ancho_cm: float, foto_alto_cm: float) -> 
         if k.replace(" ", "").startswith("fichano"):  # la plantilla dice "FICHA No.con"
             _poner_texto(p, "FICHA No.")
         elif "intervenir" in k:
+            ppr = p.find(qn("w:pPr"))
+            if ppr is not None:  # la plantilla trae sangría francesa: se quita y se centra
+                for ind in ppr.findall(qn("w:ind")):
+                    ppr.remove(ind)
+            Paragraph(p, parent).alignment = WD_ALIGN_PARAGRAPH.CENTER
             _poner_texto(p, f"IDENTIFICACIÓN DE ÁRBOLES A INTERVENIR - {f['titulo']}")
         elif k == "id":
             _poner_texto(p, str(f["ficha_no"] if n_id == 0 else f["id"]))
