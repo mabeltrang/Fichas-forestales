@@ -29,6 +29,9 @@ PROFESIONALES = {
 }
 
 MEDIDAS = ["Tala", "Poda"]
+# Texto que va después de "IDENTIFICACIÓN DE ÁRBOLES A INTERVENIR - "
+TITULOS = {"Tala": "CERCA VIVA PARA TALA", "Poda": "ÁRBOLES PARA PODA"}
+
 # Botón de la barra lateral -> medida
 MODOS = {"🪓 Tala de cerca viva": "Tala", "✂️ Poda": "Poda"}
 TIPOS_PODA = ["Poda de ramas", "Poda de aclareo", "Poda de levante", "Poda de despunte",
@@ -282,7 +285,7 @@ def render():
             if r["Observaciones inventario"]:
                 obs += " " + r["Observaciones inventario"]
             grupos[med].append(dict(
-                titulo="TALA" if med == "Tala" else "PODAS",
+                titulo=TITULOS[med],
                 ficha_no=contador[med],
                 id=r["ID"], proyecto=proyecto, ubicacion=f"{txt(c['Municipio'])}, {txt(c['Departamento'])}",
                 coordenadas=coordenadas(c["X"], c["Y"], fmt_coord, coma),
