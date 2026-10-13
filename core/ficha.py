@@ -146,7 +146,9 @@ def _llenar(tbl, f: dict, parent, foto_ancho_cm: float, foto_alto_cm: float) -> 
             continue
         k = _clave(texto)
 
-        if "intervenir" in k:
+        if k.replace(" ", "").startswith("fichano"):  # la plantilla dice "FICHA No.con"
+            _poner_texto(p, "FICHA No.")
+        elif "intervenir" in k:
             _poner_texto(p, f"IDENTIFICACIÓN DE ÁRBOLES A INTERVENIR - {f['titulo']}")
         elif k == "id":
             _poner_texto(p, str(f["ficha_no"] if n_id == 0 else f["id"]))
