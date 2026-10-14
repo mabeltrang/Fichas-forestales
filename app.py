@@ -299,6 +299,7 @@ def render():
                 tipo_fauna=r["Tipo fauna"] or "—", medida=tratamiento, observacion=obs))
             barra.progress((i + 1) / len(tabla) * 0.5, f"Preparando fotos… {r['ID']}")
 
+        nombres_catalogo = st.session_state.ff_catalogo["nombre_cientifico"].tolist()
         nombre_base = norm(proyecto).replace(" ", "_")[:40] or "proyecto"
         with zipfile.ZipFile(salida, "w", zipfile.ZIP_DEFLATED) as zf:
             for med, fichas in grupos.items():
@@ -306,14 +307,16 @@ def render():
                     continue
                 barra.progress(0.6 if med == "Tala" else 0.8, f"Armando fichas de {med.lower()}…")
                 zf.writestr(f"Fichas_{med.upper()}_{nombre_base}.docx",
-                            generar_documento(plantilla, fichas, foto_alto_cm=foto_alto))
+                            generar_documento(plantilla, fichas, foto_alto_cm=foto_alto,
+                                              otros_nombres=nombres_catalogo))
                 if individuales:
                     for f in fichas:
                         for k in ("foto1", "foto2"):
                             if f[k] is not None:
                                 f[k].seek(0)
                         zf.writestr(f"individuales/{med.upper()}_{f['id']}.docx",
-                                    generar_documento(plantilla, [f], foto_alto_cm=foto_alto))
+                                    generar_documento(plantilla, [f], foto_alto_cm=foto_alto,
+                                                              otros_nombres=nombres_catalogo))
             resumen = tabla.copy()
             buf = BytesIO()
             resumen.to_excel(buf, index=False)
