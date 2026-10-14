@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import math
+import re
 from io import BytesIO
 
 from docx import Document
@@ -10,6 +11,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.shared import Cm
 from docx.text.paragraph import Paragraph
+from docx.text.run import Run
 from PIL import Image
 
 from core.inventario import norm
@@ -75,6 +77,125 @@ def _vaciar(p) -> None:
         p.remove(r)
 
 
+# ---------- Nombres científicos en la observación ----------
+
+_SP = {"sp", "sp.", "spp", "spp."}
+
+
+def _patrones_nombre(nombre: str) -> list[tuple[re.Pattern, tuple | None]]:
+    """Patrones que reconocen un nombre científico en texto libre.
+    Devuelve (patrón, (género, epíteto)) para binomiales y (patrón, None) para 'Género sp.'."""
+    t = (nombre or "").replace("\xa0", " ").split()
+    if not t or not t[0][:1].isalpha():
+        return []
+    gen = t[0].strip("().,;")
+    if not gen[:1].isupper() or len(gen) < 3:
+        return []
+    if len(t) >= 2 and t[1].lower() not in _SP and re.fullmatch(r"[a-zë-]+", t[1].strip("().,;")):
+        ep = t[1].strip("().,;")
+        par = (gen, ep)
+        return [(re.compile(rf"\b{re.escape(gen)}\s+{re.escape(ep)}\b", re.I), par),
+                (re.compile(rf"\b{re.escape(gen[0])}\.\s*{re.escape(ep)}\b", re.I), par)]
+    # Solo género: va en cursiva si le sigue sp./spp. o cierra paréntesis (evita el nombre común "Acacia")
+    return [(re.compile(rf"\b{re.escape(gen)}\b(?=\s+spp?\b|\s*\))"), None)]
+
+
+def compilar_nombres(nombres) -> list[tuple[re.Pattern, tuple | None]]:
+    patrones, vistos = [], set()
+    for n in nombres:
+        clave = " ".join(str(n or "").split()[:2]).lower()
+        if clave and clave not in vistos:
+            vistos.add(clave)
+            patrones += _patrones_nombre(str(n))
+    return patrones
+
+
+def segmentar_observacion(texto: str, patrones, ya_citadas: set) -> list[tuple[str, bool]]:
+    """Parte el texto en (fragmento, cursiva). La primera vez que aparece una especie en el
+    documento va con el género completo; de ahí en adelante 'H. lusitanica'."""
+    hallazgos = []
+    for pat, par in patrones:
+        for m in pat.finditer(texto):
+            hallazgos.append((m.start(), -(m.end() - m.start()), m.end(), par))
+    hallazgos.sort()
+    segs, pos = [], 0
+    for ini, _, fin, par in hallazgos:
+        if ini < pos:  # se solapa con uno ya tomado
+            continue
+        if ini > pos:
+            segs.append((texto[pos:ini], False))
+        if par is None:
+            segs.append((texto[ini:fin], True))
+        else:
+            gen, ep = par
+            clave = (gen.lower(), ep.lower())
+            segs.append((f"{gen[0].upper()}. {ep}" if clave in ya_citadas else f"{gen} {ep}", True))
+            ya_citadas.add(clave)
+        pos = fin
+    if pos < len(texto):
+        segs.append((texto[pos:], False))
+    return segs
+
+
+def _poner_segmentos(p, parent, segs: list[tuple[str, bool]]) -> None:
+    """Como _poner_texto, pero con fragmentos en cursiva (mismo formato base de la plantilla)."""
+    _poner_texto(p, "")
+    base = next(r for r in p.findall(qn("w:r")) if r.find(qn("w:t")) is not None)
+    par = Paragraph(p, parent)
+    for texto, cursiva in segs:
+        r = copy.deepcopy(base)
+        t = r.find(qn("w:t"))
+        t.text = texto
+        t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+        base.addprevious(r)
+        if cursiva:
+            Run(r, par).italic = True
+    p.remove(base)
+
+
+# ---------- Tabla ----------
+
+def _fusionar_siluetas(tbl) -> None:
+    """Con una sola foto, las filas SILUETA y FOTO quedan con una celda a todo el ancho."""
+    for tr in tbl.findall(qn("w:tr")):
+        txt = _clave(_texto(tr))
+        if not (txt.startswith("silueta") or "foto 1" in txt):
+            continue
+        celdas = tr.findall(qn("w:tc"))
+        if len(celdas) < 2:
+            continue
+        span = ancho = 0
+        for tc in celdas:
+            tcpr = tc.find(qn("w:tcPr"))
+            gs = tcpr.find(qn("w:gridSpan")) if tcpr is not None else None
+            span += int(gs.get(qn("w:val"))) if gs is not None else 1
+            w = tcpr.find(qn("w:tcW")) if tcpr is not None else None
+            if w is not None and (w.get(qn("w:type")) in (None, "dxa")):
+                ancho += int(w.get(qn("w:w"), "0"))
+        primera = celdas[0]
+        for tc in celdas[1:]:
+            tr.remove(tc)
+        tcpr = primera.find(qn("w:tcPr"))
+        gs = tcpr.find(qn("w:gridSpan"))
+        if gs is None:
+            gs = tcpr.makeelement(qn("w:gridSpan"), {})
+            w = tcpr.find(qn("w:tcW"))
+            if w is not None:
+                w.addnext(gs)
+            else:
+                tcpr.insert(0, gs)
+        gs.set(qn("w:val"), str(span))
+        w = tcpr.find(qn("w:tcW"))
+        if w is not None and ancho:
+            w.set(qn("w:w"), str(ancho))
+            w.set(qn("w:type"), "dxa")
+        if txt.startswith("silueta"):
+            for p in primera.iter(qn("w:p")):
+                if _texto(p).strip():
+                    _poner_texto(p, "SILUETA")
+                    break
+
+
 def _ajustar_filas(tbl, alto_foto_twips: int) -> None:
     """La plantilla trae alturas 'exactas' que recortan texto: se pasan a 'mínimo'.
     La fila de fotos se fija a la altura de la imagen y se elimina la fila vacía de abajo."""
@@ -138,7 +259,8 @@ def _parrafo_minimo(body_parent):
     return p
 
 
-def _llenar(tbl, f: dict, parent, foto_ancho_cm: float, foto_alto_cm: float) -> None:
+def _llenar(tbl, f: dict, parent, foto_ancho_cm: float, foto_alto_cm: float,
+            obs_segs: list[tuple[str, bool]] | None = None) -> None:
     n_id = n_diam = n_foto = 0
     for p in list(tbl.iter(qn("w:p"))):
         texto = _texto(p).strip()
@@ -162,15 +284,21 @@ def _llenar(tbl, f: dict, parent, foto_ancho_cm: float, foto_alto_cm: float) -> 
             _poner_texto(p, f["dc_ns"] if n_diam == 0 else f["dc_eo"])
             n_diam += 1
         elif k in ("foto 1", "foto 2"):
-            foto = f["foto1"] if k == "foto 1" else f["foto2"]
-            _insertar_foto(p, parent, foto, foto_ancho_cm, foto_alto_cm)
+            if f.get("_foto_unica"):
+                _insertar_foto(p, parent, f["foto1"] or f["foto2"], foto_ancho_cm * 2, foto_alto_cm)
+            else:
+                foto = f["foto1"] if k == "foto 1" else f["foto2"]
+                _insertar_foto(p, parent, foto, foto_ancho_cm, foto_alto_cm)
             n_foto += 1
         elif k.startswith("arbol de la especie"):
             ppr = p.find(qn("w:pPr"))
             if ppr is not None:  # sin sangría para ganar ancho de renglón
                 for ind in ppr.findall(qn("w:ind")):
                     ppr.remove(ind)
-            _poner_texto(p, f["observacion"])
+            if obs_segs:
+                _poner_segmentos(p, parent, obs_segs)
+            else:
+                _poner_texto(p, f["observacion"])
         elif k in ETIQUETAS:
             etiqueta, campo = ETIQUETAS[k]
             _poner_texto(p, etiqueta + str(f[campo]))
@@ -178,7 +306,10 @@ def _llenar(tbl, f: dict, parent, foto_ancho_cm: float, foto_alto_cm: float) -> 
             _poner_texto(p, str(f[MARCADORES[k]]))
 
 
-def generar_documento(plantilla: bytes, fichas: list[dict], foto_ancho_cm=7.4, foto_alto_cm=6.2) -> bytes:
+def generar_documento(plantilla: bytes, fichas: list[dict], foto_ancho_cm=7.4, foto_alto_cm=6.2,
+                      otros_nombres=()) -> bytes:
+    """otros_nombres: nombres científicos adicionales (p. ej. el catálogo) para poner en cursiva
+    si aparecen en las observaciones."""
     doc = Document(BytesIO(plantilla))
     body = doc.element.body
     tbl_base = body.find(qn("w:tbl"))
@@ -189,6 +320,9 @@ def generar_documento(plantilla: bytes, fichas: list[dict], foto_ancho_cm=7.4, f
         if el is not sectpr:
             body.remove(el)
 
+    patrones = compilar_nombres([f.get("especie") for f in fichas] + list(otros_nombres))
+    ya_citadas: set = set()  # especies ya escritas completas en este documento
+
     for i, f in enumerate(fichas):
         if i > 0:
             sectpr.addprevious(_salto_pagina(body))
@@ -197,8 +331,12 @@ def generar_documento(plantilla: bytes, fichas: list[dict], foto_ancho_cm=7.4, f
         alto = max(FOTO_ALTO_MIN_CM, foto_alto_cm - max(0, renglones - 2) * ALTO_RENGLON_CM)
         tbl = copy.deepcopy(tbl_base)
         _ajustar_filas(tbl, int((alto + 0.25) * 567))
+        f = dict(f, _foto_unica=(f.get("foto1") is None) or (f.get("foto2") is None))
+        if f["_foto_unica"]:
+            _fusionar_siluetas(tbl)
         sectpr.addprevious(tbl)
-        _llenar(tbl, f, doc._body, foto_ancho_cm, alto)
+        segs = segmentar_observacion(f["observacion"], patrones, ya_citadas)
+        _llenar(tbl, f, doc._body, foto_ancho_cm, alto, segs)
     sectpr.addprevious(_parrafo_minimo(body))  # Word exige un párrafo después de una tabla
 
     out = BytesIO()
